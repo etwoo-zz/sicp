@@ -1,5 +1,3 @@
-(require sicp)
-
 ;;;;METACIRCULAR EVALUATOR FROM CHAPTER 4 (SECTIONS 4.1.1-4.1.4) of
 ;;;; STRUCTURE AND INTERPRETATION OF COMPUTER PROGRAMS
 
@@ -367,6 +365,9 @@
                      '<procedure-env>))
       (display object)))
 
+;; CHICKEN compat
+(define true #t)
+(define false #f)
 ;;;Following are commented out so as not to be evaluated when
 ;;; the file is loaded.
 ;;(define the-global-environment (setup-environment))

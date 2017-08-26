@@ -1,0 +1,2 @@
+# CHICKEN compiles *.scm to *.c
+ch4-mceval.c
