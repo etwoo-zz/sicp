@@ -30,6 +30,8 @@
         ((begin? exp) 
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
+        ((and? exp) (eval (and->if exp) env))
+        ((or? exp) (eval (or->if exp) env))
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
@@ -212,6 +214,43 @@
             (make-if (cond-predicate first)
                      (sequence->exp (cond-actions first))
                      (expand-clauses rest))))))
+
+;;;EXERCISE 4.4 -- BEGIN
+
+(define (and? exp) (tagged-list? exp 'and))
+(define (or? exp) (tagged-list? exp 'or))
+
+(define (bool-args exp) (cdr exp))
+
+(define (and->if exp)
+  (let ((args (bool-args exp)))
+    (if (null? args)
+      'true
+      (expand-and args))))
+
+;; (and 1 2) -> (if 1 (if 2 2 #f) #f)
+(define (expand-and args)
+  (let ((first (car args))
+        (rest (cdr args)))
+    (if (null? rest)
+      (make-if first first 'false)
+      (make-if first (expand-and rest) 'false))))
+
+(define (or->if exp)
+  (let ((args (bool-args exp)))
+    (if (null? args)
+      'false
+      (expand-or args))))
+
+;; (or 1 2) -> (if 1 1 (if 2 2 #f))
+(define (expand-or args)
+  (let ((first (car args))
+        (rest (cdr args)))
+    (if (null? rest)
+      (make-if first first 'false)
+      (make-if first first (expand-and rest)))))
+
+;;;EXERCISE 4.4 -- END
 
 ;;;SECTION 4.1.3
 
