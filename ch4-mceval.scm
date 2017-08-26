@@ -32,6 +32,7 @@
         ((cond? exp) (eval (cond->if exp) env))
         ((and? exp) (eval (and->if exp) env))
         ((or? exp) (eval (or->if exp) env))
+        ((let? exp) (eval (let->combination exp) env))
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
@@ -251,6 +252,24 @@
       (make-if first first (expand-and rest)))))
 
 ;;;EXERCISE 4.4 -- END
+
+;;;EXERCISE 4.6 -- BEGIN
+
+(define (let? exp) (tagged-list? exp 'let))
+
+(define (let-bindings exp) (cadr exp))
+(define (let-variable-names bindings) (map car bindings))
+(define (let-variable-values bindings) (map cadr bindings))
+(define (let-body exp) (cddr exp))
+
+; (let ((x 1) (y 2)) (* x y)) -> ((lambda (x y) (* x y)) 1 2)
+(define (let->combination exp)
+  (let ((bindings (let-bindings exp))
+        (body (let-body exp)))
+    (cons (make-lambda (let-variable-names bindings) body)
+          (let-variable-values bindings))))
+
+;;;EXERCISE 4.6 -- END
 
 ;;;SECTION 4.1.3
 
