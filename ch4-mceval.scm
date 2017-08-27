@@ -33,6 +33,7 @@
         ((and? exp) (eval (and->if exp) env))
         ((or? exp) (eval (or->if exp) env))
         ((let? exp) (eval (let->combination exp) env))
+        ((let*? exp) (eval (let*->nested-lets exp) env))
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
@@ -260,16 +261,36 @@
 (define (let-bindings exp) (cadr exp))
 (define (let-variable-names bindings) (map car bindings))
 (define (let-variable-values bindings) (map cadr bindings))
-(define (let-body exp) (cddr exp))
+(define (let-body exp) (caddr exp))
 
 ; (let ((x 1) (y 2)) (* x y)) -> ((lambda (x y) (* x y)) 1 2)
 (define (let->combination exp)
   (let ((bindings (let-bindings exp))
         (body (let-body exp)))
-    (cons (make-lambda (let-variable-names bindings) body)
+    (cons (make-lambda (let-variable-names bindings) (list body))
           (let-variable-values bindings))))
 
 ;;;EXERCISE 4.6 -- END
+
+;;;EXERCISE 4.7 -- BEGIN
+
+(define (let*? exp) (tagged-list? exp 'let*))
+
+(define (make-let bindings body)
+  (list 'let bindings body))
+
+; (let* ((x 1) (y x)) y) -> (let ((x 1)) (let ((y x)) y))
+(define (let*->nested-lets exp)
+  (let ((bindings (let-bindings exp))
+        (body (let-body exp)))
+    (expand-let* bindings body)))
+
+(define (expand-let* bindings body)
+  (if (null? bindings)
+    body
+    (make-let (list (car bindings)) (expand-let* (cdr bindings) body))))
+
+;;;EXERCISE 4.7 -- END
 
 ;;;SECTION 4.1.3
 
