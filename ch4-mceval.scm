@@ -254,23 +254,43 @@
 
 ;;;EXERCISE 4.4 -- END
 
-;;;EXERCISE 4.6 -- BEGIN
+;;;EXERCISE 4.6 and 4.8 -- BEGIN
 
 (define (let? exp) (tagged-list? exp 'let))
+(define (named-let? exp) (and (let? exp) (symbol? (cadr exp))))
 
-(define (let-bindings exp) (cadr exp))
+(define (let-named-var exp) (if (named-let? exp) (cadr exp) '()))
+(define (let-bindings exp) (if (named-let? exp) (caddr exp) (cadr exp)))
 (define (let-variable-names bindings) (map car bindings))
 (define (let-variable-values bindings) (map cadr bindings))
-(define (let-body exp) (caddr exp))
+(define (let-body exp) (if (named-let? exp) (cadddr exp) (caddr exp)))
 
 ; (let ((x 1) (y 2)) (* x y)) -> ((lambda (x y) (* x y)) 1 2)
+;
+; (let fact ((n 10)) (if (= n 0) 1 (* n (fact (- n 1)))))
+;  ->
+; (begin
+;   (define fact
+;     (lambda (n)
+;       (if (= n 0)
+;         1
+;         (* n (fact (- n 1))))))
+;   (fact 10))
 (define (let->combination exp)
-  (let ((bindings (let-bindings exp))
-        (body (let-body exp)))
-    (cons (make-lambda (let-variable-names bindings) (list body))
-          (let-variable-values bindings))))
+  (let* ((named-var (let-named-var exp))
+         (bindings (let-bindings exp))
+         (bound-names (let-variable-names bindings))
+         (bound-values (let-variable-values bindings))
+         (body (let-body exp))
+         (derived-lambda (make-lambda bound-names (list body))))
+    (if (null? named-var)
+      ; simple let
+      (cons derived-lambda bound-values)
+      ; named let: set up definition, then apply lambda via this new definition
+      (make-begin (list (list 'define named-var derived-lambda)
+                        (cons named-var bound-values))))))
 
-;;;EXERCISE 4.6 -- END
+;;;EXERCISE 4.6 and 4.8 -- END
 
 ;;;EXERCISE 4.7 -- BEGIN
 
@@ -404,6 +424,7 @@
         (list '- -)
         (list '* *)
         (list '/ /)
+        (list '= =)
 ;;      more primitives
         ))
 
